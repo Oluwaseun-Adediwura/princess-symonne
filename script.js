@@ -38,27 +38,38 @@ function initializeApp() {
     
     console.log('Elements found, setting up listeners...');
     
-    // Remove any existing listeners
-    mainButton.removeEventListener('click', handleMainButtonClick);
-    backButton.removeEventListener('click', handleBackButtonClick);
+    // Remove any existing listeners first
+    if (mainButton) {
+        mainButton.removeEventListener('click', handleMainButtonClick);
+        mainButton.onclick = null;
+    }
+    if (backButton) {
+        backButton.removeEventListener('click', handleBackButtonClick);
+        backButton.onclick = null;
+    }
     
-    // Add event listeners
-    mainButton.addEventListener('click', function(e) {
-        console.log('Main button clicked!');
-        e.preventDefault();
-        handleMainButtonClick();
-    });
+    // Add event listeners with multiple methods for better compatibility
+    if (mainButton) {
+        mainButton.addEventListener('click', handleMainButtonClick, true);
+        mainButton.onclick = handleMainButtonClick;
+        
+        // Also add touch events for mobile
+        mainButton.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            handleMainButtonClick();
+        });
+    }
     
-    backButton.addEventListener('click', function(e) {
-        console.log('Back button clicked!');
-        e.preventDefault();
-        handleBackButtonClick();
-    });
+    if (backButton) {
+        backButton.addEventListener('click', handleBackButtonClick, true);
+        backButton.onclick = handleBackButtonClick;
+    }
     
     // Initialize audio on first interaction
     document.addEventListener('click', initializeAudio, { once: true });
     
-    // Update UI to initial state
+    // Reset to initial state
+    currentStep = 'initial';
     updateUI();
     
     console.log('App initialized successfully!');
@@ -99,25 +110,32 @@ function playSparkleSound() {
 }
 
 // Main Button Click Handler
-function handleMainButtonClick() {
-    console.log('Handling main button click, current step:', currentStep);
+function handleMainButtonClick(e) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    console.log('🌸 BUTTON CLICKED! Current step:', currentStep);
     
     switch (currentStep) {
         case 'initial':
+            console.log('🔄 Moving from initial to concern step');
             currentStep = 'concern';
-            console.log('Moving to concern step');
             break;
         case 'concern':
+            console.log('🔄 Moving from concern to bible step');
             currentStep = 'bible';
-            console.log('Moving to bible step');
             playSparkleSound();
             setTimeout(createConfetti, 300);
             break;
         default:
-            console.log('Unknown step:', currentStep);
+            console.log('❌ Unknown step:', currentStep);
+            return;
     }
     
     updateUI();
+    console.log('✅ UI updated for step:', currentStep);
 }
 
 // Back Button Click Handler
@@ -130,10 +148,10 @@ function handleBackButtonClick() {
 
 // Update UI based on current step
 function updateUI() {
-    console.log('Updating UI for step:', currentStep);
+    console.log('🎨 Updating UI for step:', currentStep);
     
     if (!stepInitial || !stepConcern || !stepBible || !mainButton || !backButton) {
-        console.error('Missing UI elements!');
+        console.error('❌ Missing UI elements!');
         return;
     }
     
@@ -142,28 +160,36 @@ function updateUI() {
     stepConcern.classList.remove('active');
     stepBible.classList.remove('active');
     
-    // Activate current step
-    switch (currentStep) {
-        case 'initial':
-            stepInitial.classList.add('active');
-            mainButton.textContent = 'Click Me';
-            mainButton.style.display = 'block';
-            backButton.classList.add('hidden');
-            break;
-            
-        case 'concern':
-            stepConcern.classList.add('active');
-            mainButton.textContent = '💝 Continue 💝';
-            mainButton.style.display = 'block';
-            backButton.classList.remove('hidden');
-            break;
-            
-        case 'bible':
-            stepBible.classList.add('active');
-            mainButton.style.display = 'none';
-            backButton.classList.remove('hidden');
-            break;
-    }
+    // Activate current step with delay for smooth transitions
+    setTimeout(() => {
+        switch (currentStep) {
+            case 'initial':
+                console.log('🏠 Showing initial step');
+                stepInitial.classList.add('active');
+                mainButton.textContent = 'Click Me';
+                mainButton.style.display = 'block';
+                mainButton.style.visibility = 'visible';
+                backButton.classList.add('hidden');
+                break;
+                
+            case 'concern':
+                console.log('💗 Showing concern step');
+                stepConcern.classList.add('active');
+                mainButton.textContent = '💝 Continue 💝';
+                mainButton.style.display = 'block';
+                mainButton.style.visibility = 'visible';
+                backButton.classList.remove('hidden');
+                break;
+                
+            case 'bible':
+                console.log('📖 Showing bible step');
+                stepBible.classList.add('active');
+                mainButton.style.display = 'none';
+                mainButton.style.visibility = 'hidden';
+                backButton.classList.remove('hidden');
+                break;
+        }
+    }, 100);
 }
 
 // Confetti Animation
