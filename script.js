@@ -7,6 +7,10 @@ let stepInitial, stepConcern, stepBible, mainButton, backButton, confettiContain
 // Audio context
 let audioContext;
 
+// Make functions globally available
+window.handleMainButtonClick = handleMainButtonClick;
+window.handleBackButtonClick = handleBackButtonClick;
+
 // Initialize when page loads
 window.addEventListener('load', function() {
     console.log('Page loaded, initializing app...');
@@ -20,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApp() {
-    console.log('Initializing app...');
+    console.log('🚀 Initializing app...');
     
     // Get DOM elements
     stepInitial = document.getElementById('step-initial');
@@ -32,38 +36,14 @@ function initializeApp() {
     
     // Check if elements exist
     if (!mainButton) {
-        console.error('Main button not found!');
+        console.error('❌ Main button not found!');
         return;
     }
     
-    console.log('Elements found, setting up listeners...');
-    
-    // Remove any existing listeners first
-    if (mainButton) {
-        mainButton.removeEventListener('click', handleMainButtonClick);
-        mainButton.onclick = null;
-    }
-    if (backButton) {
-        backButton.removeEventListener('click', handleBackButtonClick);
-        backButton.onclick = null;
-    }
-    
-    // Add event listeners with multiple methods for better compatibility
-    if (mainButton) {
-        mainButton.addEventListener('click', handleMainButtonClick, true);
-        mainButton.onclick = handleMainButtonClick;
-        
-        // Also add touch events for mobile
-        mainButton.addEventListener('touchend', function(e) {
-            e.preventDefault();
-            handleMainButtonClick();
-        });
-    }
-    
-    if (backButton) {
-        backButton.addEventListener('click', handleBackButtonClick, true);
-        backButton.onclick = handleBackButtonClick;
-    }
+    console.log('✅ Elements found!');
+    console.log('Button element:', mainButton);
+    console.log('Button visible:', mainButton.offsetParent !== null);
+    console.log('Button clickable:', window.getComputedStyle(mainButton).pointerEvents);
     
     // Initialize audio on first interaction
     document.addEventListener('click', initializeAudio, { once: true });
@@ -72,7 +52,8 @@ function initializeApp() {
     currentStep = 'initial';
     updateUI();
     
-    console.log('App initialized successfully!');
+    console.log('✅ App initialized successfully!');
+    console.log('Try clicking the button now!');
 }
 
 // Audio Setup
