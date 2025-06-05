@@ -2,41 +2,75 @@
 let currentStep = 'initial'; // 'initial', 'concern', 'bible'
 
 // DOM Elements
-const stepInitial = document.getElementById('step-initial');
-const stepConcern = document.getElementById('step-concern');
-const stepBible = document.getElementById('step-bible');
-const mainButton = document.getElementById('main-button');
-const backButton = document.getElementById('back-button');
-const confettiContainer = document.getElementById('confetti-container');
+let stepInitial, stepConcern, stepBible, mainButton, backButton, confettiContainer;
 
-// Audio for sparkle sound (using Web Audio API)
+// Audio context
 let audioContext;
-let isAudioInitialized = false;
 
-// Initialize the app
-document.addEventListener('DOMContentLoaded', function() {
-    setupEventListeners();
-    updateUI();
+// Initialize when page loads
+window.addEventListener('load', function() {
+    console.log('Page loaded, initializing app...');
+    initializeApp();
 });
 
-// Event Listeners
-function setupEventListeners() {
-    mainButton.addEventListener('click', handleMainButtonClick);
-    backButton.addEventListener('click', handleBackButtonClick);
+// Also try with DOMContentLoaded as backup
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing app...');
+    setTimeout(initializeApp, 100); // Small delay to ensure everything is ready
+});
+
+function initializeApp() {
+    console.log('Initializing app...');
     
-    // Initialize audio on first user interaction
+    // Get DOM elements
+    stepInitial = document.getElementById('step-initial');
+    stepConcern = document.getElementById('step-concern');
+    stepBible = document.getElementById('step-bible');
+    mainButton = document.getElementById('main-button');
+    backButton = document.getElementById('back-button');
+    confettiContainer = document.getElementById('confetti-container');
+    
+    // Check if elements exist
+    if (!mainButton) {
+        console.error('Main button not found!');
+        return;
+    }
+    
+    console.log('Elements found, setting up listeners...');
+    
+    // Remove any existing listeners
+    mainButton.removeEventListener('click', handleMainButtonClick);
+    backButton.removeEventListener('click', handleBackButtonClick);
+    
+    // Add event listeners
+    mainButton.addEventListener('click', function(e) {
+        console.log('Main button clicked!');
+        e.preventDefault();
+        handleMainButtonClick();
+    });
+    
+    backButton.addEventListener('click', function(e) {
+        console.log('Back button clicked!');
+        e.preventDefault();
+        handleBackButtonClick();
+    });
+    
+    // Initialize audio on first interaction
     document.addEventListener('click', initializeAudio, { once: true });
+    
+    // Update UI to initial state
+    updateUI();
+    
+    console.log('App initialized successfully!');
 }
 
 // Audio Setup
 function initializeAudio() {
-    if (!isAudioInitialized) {
-        try {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            isAudioInitialized = true;
-        } catch (error) {
-            console.log('Audio not supported');
-        }
+    try {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('Audio initialized');
+    } catch (error) {
+        console.log('Audio not supported:', error);
     }
 }
 
@@ -44,47 +78,51 @@ function playSparkleSound() {
     if (!audioContext) return;
     
     try {
-        // Create a gentle chime sound
         const oscillator = audioContext.createOscillator();
         const gainNode = audioContext.createGain();
         
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
         
-        // Create a pleasant chime
         oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(1200, audioContext.currentTime + 0.1);
         oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.3);
         
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
         
         oscillator.start(audioContext.currentTime);
         oscillator.stop(audioContext.currentTime + 0.5);
     } catch (error) {
-        console.log('Could not play sound');
+        console.log('Could not play sound:', error);
     }
 }
 
 // Main Button Click Handler
 function handleMainButtonClick() {
+    console.log('Handling main button click, current step:', currentStep);
+    
     switch (currentStep) {
         case 'initial':
             currentStep = 'concern';
+            console.log('Moving to concern step');
             break;
         case 'concern':
             currentStep = 'bible';
+            console.log('Moving to bible step');
             playSparkleSound();
-            setTimeout(() => {
-                createConfetti();
-            }, 300);
+            setTimeout(createConfetti, 300);
             break;
+        default:
+            console.log('Unknown step:', currentStep);
     }
+    
     updateUI();
 }
 
 // Back Button Click Handler
 function handleBackButtonClick() {
+    console.log('Handling back button click');
     currentStep = 'initial';
     clearConfetti();
     updateUI();
@@ -92,6 +130,13 @@ function handleBackButtonClick() {
 
 // Update UI based on current step
 function updateUI() {
+    console.log('Updating UI for step:', currentStep);
+    
+    if (!stepInitial || !stepConcern || !stepBible || !mainButton || !backButton) {
+        console.error('Missing UI elements!');
+        return;
+    }
+    
     // Reset all steps
     stepInitial.classList.remove('active');
     stepConcern.classList.remove('active');
@@ -123,8 +168,10 @@ function updateUI() {
 
 // Confetti Animation
 function createConfetti() {
+    if (!confettiContainer) return;
+    
     const colors = ['#ff69b4', '#ff1493', '#db7093', '#dda0dd', '#da70d6'];
-    const confettiCount = 30;
+    const confettiCount = 25;
     
     for (let i = 0; i < confettiCount; i++) {
         setTimeout(() => {
@@ -132,7 +179,7 @@ function createConfetti() {
             confetti.className = 'confetti-piece';
             confetti.style.left = Math.random() * 100 + '%';
             confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            confetti.style.animationDelay = Math.random() * 0.5 + 's';
+            confetti.style.animationDelay = Math.random() * 0.3 + 's';
             confetti.style.animationDuration = (Math.random() * 1 + 1.5) + 's';
             
             confettiContainer.appendChild(confetti);
@@ -143,100 +190,46 @@ function createConfetti() {
                     confetti.parentNode.removeChild(confetti);
                 }
             }, 3000);
-        }, i * 50);
+        }, i * 40);
     }
 }
 
 function clearConfetti() {
-    confettiContainer.innerHTML = '';
-}
-
-// Add some extra sparkle to the sparkles
-function enhanceSparkles() {
-    const sparkles = document.querySelectorAll('.sparkle');
-    sparkles.forEach((sparkle, index) => {
-        sparkle.style.animationDelay = (index * 0.3) + 's';
-        sparkle.style.animationDuration = (Math.random() * 2 + 2) + 's';
-    });
-}
-
-// Enhanced button interactions
-function setupButtonEffects() {
-    mainButton.addEventListener('mouseenter', function() {
-        this.style.transform = 'scale(1.05)';
-    });
-    
-    mainButton.addEventListener('mouseleave', function() {
-        this.style.transform = 'scale(1)';
-    });
-    
-    backButton.addEventListener('mouseenter', function() {
-        this.style.transform = 'scale(1.05)';
-    });
-    
-    backButton.addEventListener('mouseleave', function() {
-        this.style.transform = 'scale(1)';
-    });
-}
-
-// Add floating hearts effect for extra princess magic
-function createFloatingHearts() {
-    if (currentStep === 'bible') {
-        const heart = document.createElement('div');
-        heart.innerHTML = '💖';
-        heart.style.position = 'absolute';
-        heart.style.left = Math.random() * 100 + '%';
-        heart.style.top = '100%';
-        heart.style.fontSize = '20px';
-        heart.style.pointerEvents = 'none';
-        heart.style.animation = 'floatUp 3s ease-out forwards';
-        heart.style.zIndex = '4';
-        
-        // Add floating animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes floatUp {
-                0% {
-                    opacity: 1;
-                    transform: translateY(0) rotate(0deg);
-                }
-                100% {
-                    opacity: 0;
-                    transform: translateY(-100vh) rotate(360deg);
-                }
-            }
-        `;
-        document.head.appendChild(style);
-        
-        document.body.appendChild(heart);
-        
-        setTimeout(() => {
-            if (heart.parentNode) {
-                heart.parentNode.removeChild(heart);
-            }
-        }, 3000);
+    if (confettiContainer) {
+        confettiContainer.innerHTML = '';
     }
 }
 
-// Initialize enhanced features
-document.addEventListener('DOMContentLoaded', function() {
-    enhanceSparkles();
-    setupButtonEffects();
+// Add button hover effects
+function addButtonEffects() {
+    if (mainButton) {
+        mainButton.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+        });
+        
+        mainButton.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    }
     
-    // Add periodic floating hearts when on bible verse step
-    setInterval(() => {
-        if (currentStep === 'bible' && Math.random() < 0.3) {
-            createFloatingHearts();
-        }
-    }, 2000);
-});
+    if (backButton) {
+        backButton.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.05)';
+        });
+        
+        backButton.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    }
+}
 
-// Add keyboard support for accessibility
+// Keyboard support
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Enter' || event.key === ' ') {
-        if (currentStep !== 'bible' && document.activeElement === mainButton) {
+        event.preventDefault();
+        if (currentStep !== 'bible') {
             handleMainButtonClick();
-        } else if (currentStep !== 'initial' && document.activeElement === backButton) {
+        } else {
             handleBackButtonClick();
         }
     }
@@ -246,7 +239,7 @@ document.addEventListener('keydown', function(event) {
     }
 });
 
-// Add touch support for mobile
+// Mobile touch support
 let touchStartY = 0;
 document.addEventListener('touchstart', function(e) {
     touchStartY = e.touches[0].clientY;
@@ -256,14 +249,22 @@ document.addEventListener('touchend', function(e) {
     const touchEndY = e.changedTouches[0].clientY;
     const touchDiff = touchStartY - touchEndY;
     
-    // Swipe up to continue, swipe down to go back
     if (Math.abs(touchDiff) > 50) {
         if (touchDiff > 0 && currentStep !== 'bible') {
-            // Swipe up - continue
             handleMainButtonClick();
         } else if (touchDiff < 0 && currentStep !== 'initial') {
-            // Swipe down - go back
             handleBackButtonClick();
         }
     }
-}); 
+});
+
+// Add sparkle animations
+setTimeout(function() {
+    const sparkles = document.querySelectorAll('.sparkle');
+    sparkles.forEach((sparkle, index) => {
+        sparkle.style.animationDelay = (index * 0.4) + 's';
+        sparkle.style.animationDuration = (Math.random() * 2 + 3) + 's';
+    });
+}, 500);
+
+console.log('Script loaded successfully!'); 
